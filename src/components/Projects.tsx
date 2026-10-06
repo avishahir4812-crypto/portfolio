@@ -9,67 +9,69 @@ import { GithubIcon } from "./BrandIcons";
 import SectionHeading from "./SectionHeading";
 import { EASE, Reveal } from "./motion-primitives";
 
+/** 
+ * PROFESSIONAL MOCKUP GENERATOR (DeltaDesk Style)
+ * Yeh function ek data-URI SVG banata hai jo bilkul aapke 
+ * screenshot (DeltaDesk) jaisa dikhta hai.
+ */
 function buildMockupSVG(title: string, domain: string, index: string | number): string {
-  const d = domain || "project.dev";
+  const d = domain || "project.live";
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
-  <rect width="1600" height="1000" fill="#e9e5da"/>
-  <circle cx="1330" cy="760" r="330" fill="none" stroke="#17140f" stroke-opacity="0.12" stroke-width="2"/>
-  <rect x="0" y="0" width="1600" height="76" fill="#f3f0e9"/>
-  <circle cx="52" cy="38" r="10" fill="#ff4d00"/>
-  <circle cx="86" cy="38" r="10" fill="#17140f" opacity="0.22"/>
-  <circle cx="120" cy="38" r="10" fill="#17140f" opacity="0.22"/>
-  <rect x="180" y="19" width="620" height="38" rx="19" fill="#ffffff" opacity="0.65" stroke="#17140f" stroke-opacity="0.15"/>
-  <text x="212" y="44" font-family="monospace" font-size="21" fill="#55524a">https://${d}</text>
-  <text x="880" y="48" font-family="monospace" font-size="20" letter-spacing="4" fill="#8d887c">P/${index}</text>
-  <rect x="880" y="150" width="620" height="380" rx="6" fill="#f3f0e9" stroke="#17140f" stroke-opacity="0.14"/>
-  <rect x="916" y="186" width="300" height="16" fill="#17140f" opacity="0.85"/>
-  <rect x="916" y="222" width="420" height="9" fill="#17140f" opacity="0.25"/>
-  <rect x="916" y="244" width="380" height="9" fill="#17140f" opacity="0.25"/>
-  <rect x="916" y="290" width="150" height="44" fill="#ff4d00"/>
-  <rect x="916" y="392" width="548" height="1.5" fill="#17140f" opacity="0.2"/>
-  <rect x="916" y="428" width="548" height="1.5" fill="#17140f" opacity="0.2"/>
-  <rect x="916" y="464" width="548" height="1.5" fill="#17140f" opacity="0.2"/>
-  <text x="90" y="620" font-family="Georgia, serif" font-size="400" fill="none" stroke="#17140f" stroke-opacity="0.16" stroke-width="3">${index}</text>
-  <text x="96" y="800" font-family="Georgia, serif" font-size="92" fill="#17140f">${title}</text>
-  <rect x="98" y="838" width="200" height="10" fill="#ff4d00"/>
-  <text x="98" y="912" font-family="monospace" font-size="25" letter-spacing="6" fill="#8d887c">LIVE — ${d}</text>
-</svg>`;
+    <rect width="1600" height="1000" fill="#f3f0e9"/>
+    <!-- Large Background Index -->
+    <text x="800" y="650" font-family="Georgia, serif" font-size="700" text-anchor="middle" fill="none" stroke="#17140f" stroke-opacity="0.06" stroke-width="2">${index}</text>
+    
+    <!-- Browser Chrome -->
+    <rect x="0" y="0" width="1600" height="60" fill="#e9e5da"/>
+    <circle cx="40" cy="30" r="8" fill="#ff4d00"/>
+    <circle cx="70" cy="30" r="8" fill="#17140f" opacity="0.1"/>
+    <circle cx="100" cy="30" r="8" fill="#17140f" opacity="0.1"/>
+    <rect x="150" y="15" width="500" height="30" rx="15" fill="#ffffff" opacity="0.5"/>
+    <text x="170" y="36" font-family="monospace" font-size="16" fill="#8d887c">https://${d}</text>
+    
+    <!-- Content Mockup -->
+    <text x="100" y="740" font-family="Georgia, serif" font-size="120" font-weight="bold" fill="#17140f">${title}</text>
+    <rect x="100" y="780" width="180" height="12" fill="#ff4d00"/>
+    <text x="100" y="860" font-family="monospace" font-size="24" letter-spacing="4" fill="#8d887c">LIVE PREVIEW — ${d}</text>
+    
+    <!-- Abstract UI Elements (Right Side) -->
+    <rect x="950" y="200" width="500" height="350" rx="4" fill="#ffffff" stroke="#17140f" stroke-opacity="0.08"/>
+    <rect x="980" y="240" width="280" height="20" fill="#17140f" opacity="0.7"/>
+    <rect x="980" y="280" width="400" height="8" fill="#17140f" opacity="0.1"/>
+    <rect x="980" y="300" width="350" height="8" fill="#17140f" opacity="0.1"/>
+    <rect x="980" y="360" width="140" height="40" fill="#ff4d00"/>
+    <circle cx="1300" cy="750" r="300" fill="none" stroke="#17140f" stroke-opacity="0.05" stroke-width="1.5"/>
+  </svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
 function ProjectImage({ p, priority }: { p: (typeof projects)[number]; priority?: boolean }) {
-  const hasRealImage =
-    typeof p.image === "string" && p.image.trim().length > 0
-      ? true
-      : typeof p.image === "object" && p.image !== null && "src" in p.image
-        ? true
-        : false;
-
-  const [showFallback, setShowFallback] = useState(!hasRealImage);
+  // Check if image exists in data
+  const hasImage = !!p.image && (typeof p.image === 'string' ? p.image.length > 0 : true);
+  const [error, setError] = useState(!hasImage);
 
   const domain = (p.live || "").replace(/^https?:\/\//, "").replace(/\/$/, "");
-  const cls =
-    "object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]";
+  const imgCls = "object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]";
 
-  if (showFallback) {
+  if (error) {
     return (
-      <img
-        src={buildMockupSVG(p.title, domain, p.index)}
-        alt={`${p.title} — preview`}
-        className={`absolute inset-0 h-full w-full ${cls}`}
+      <img 
+        src={buildMockupSVG(p.title, domain, p.index)} 
+        alt={p.title} 
+        className={`absolute inset-0 h-full w-full ${imgCls}`}
       />
     );
   }
 
   return (
     <Image
-      src={p.image}
-      alt={`${p.title} — live website preview`}
+      src={p.image!}
+      alt={p.title}
       fill
       priority={priority}
       sizes="(max-width: 1024px) 100vw, 58vw"
-      onError={() => setShowFallback(true)}
-      className={cls}
+      onError={() => setError(true)}
+      className={imgCls}
     />
   );
 }
@@ -88,10 +90,8 @@ export default function Projects() {
         {projects.map((p, i) => {
           const flip = i % 2 === 1;
           return (
-            <article
-              key={p.index}
-              className="grid items-center gap-8 lg:grid-cols-12 lg:gap-14"
-            >
+            <article key={p.index} className="grid items-center gap-8 lg:grid-cols-12 lg:gap-14">
+              {/* Image Section — Ab har project mein professional mockup aayega */}
               <motion.a
                 href={p.live}
                 target="_blank"
@@ -102,23 +102,24 @@ export default function Projects() {
                 whileInView={{ clipPath: "inset(0 0 0% 0)", y: 0 }}
                 viewport={{ once: true, margin: "-90px" }}
                 transition={{ duration: 1, ease: EASE }}
-                className={`group relative block overflow-hidden rounded-[2px] bg-paper-2 lg:col-span-7 ${
-                  flip ? "lg:order-2" : ""
-                }`}
+                className={`group relative block overflow-hidden rounded-[2px] bg-paper-2 lg:col-span-7 ${flip ? "lg:order-2" : ""}`}
               >
                 <div className="relative aspect-[16/10] w-full overflow-hidden">
                   <ProjectImage p={p} priority={i === 0} />
                   <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-paper/25 to-transparent transition-transform duration-[1100ms] ease-out group-hover:translate-x-full" />
                 </div>
+                
+                {/* Overlay Details */}
                 <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-paper/90 px-4 py-2 font-mono text-[9px] uppercase tracking-[0.22em] backdrop-blur">
                   <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                  Live — {p.live.replace("https://", "").replace(/\/$/, "")}
+                  Live — {domainOnly(p.live)}
                 </div>
                 <span className="pointer-events-none absolute -bottom-1 right-2 font-display text-[7rem] font-medium leading-none text-outline opacity-60 md:text-[9rem]">
                   {p.index}
                 </span>
               </motion.a>
 
+              {/* Content Section */}
               <div className={`lg:col-span-5 ${flip ? "lg:order-1" : ""}`}>
                 <Reveal delay={0.1}>
                   <div className="flex items-center gap-4 font-mono text-[10px] uppercase tracking-[0.25em] text-ink-3">
@@ -131,22 +132,16 @@ export default function Projects() {
                 </Reveal>
                 <Reveal delay={0.18}>
                   <h3 className="mt-5 font-display text-4xl font-medium tracking-tight md:text-5xl">
-                    {p.title}
-                    <span className="text-accent">.</span>
+                    {p.title}<span className="text-accent">.</span>
                   </h3>
                 </Reveal>
                 <Reveal delay={0.26}>
-                  <p className="mt-5 text-[15px] leading-relaxed text-ink-2">
-                    {p.description}
-                  </p>
+                  <p className="mt-5 text-[15px] leading-relaxed text-ink-2">{p.description}</p>
                 </Reveal>
                 <Reveal delay={0.34}>
                   <div className="mt-6 flex flex-wrap gap-2">
                     {p.stack.map((t) => (
-                      <span
-                        key={t}
-                        className="border border-line px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-ink-2"
-                      >
+                      <span key={t} className="border border-line px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-ink-2">
                         {t}
                       </span>
                     ))}
@@ -154,24 +149,11 @@ export default function Projects() {
                 </Reveal>
                 <Reveal delay={0.42}>
                   <div className="mt-8 flex items-center gap-6">
-                    <a
-                      href={p.live}
-                      target="_blank"
-                      rel="noreferrer"
-                      data-cursor="hover"
-                      className="group inline-flex items-center gap-2 border-b-2 border-ink pb-1 font-mono text-[11px] uppercase tracking-[0.2em] transition-colors duration-300 hover:border-accent hover:text-accent"
-                    >
+                    <a href={p.live} target="_blank" rel="noreferrer" className="group inline-flex items-center gap-2 border-b-2 border-ink pb-1 font-mono text-[11px] uppercase tracking-[0.2em] transition-colors hover:border-accent hover:text-accent">
                       Visit Live Site
-                      <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1" />
+                      <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
                     </a>
-                    <a
-                      href={profile.github}
-                      target="_blank"
-                      rel="noreferrer"
-                      data-cursor="hover"
-                      aria-label={`${p.title} source code on GitHub`}
-                      className="text-ink-2 transition-all duration-300 hover:-translate-y-1 hover:text-ink"
-                    >
+                    <a href={profile.github} target="_blank" rel="noreferrer" className="text-ink-2 transition-all hover:-translate-y-1 hover:text-ink">
                       <GithubIcon className="h-5 w-5" />
                     </a>
                   </div>
@@ -181,24 +163,10 @@ export default function Projects() {
           );
         })}
       </div>
-
-      <Reveal>
-        <div className="mt-16 flex flex-col items-center gap-4 border-t border-line pt-10 text-center">
-          <p className="font-display text-2xl italic text-ink-2 md:text-3xl">
-            Plus the internal builds — AQI Calculator, Map Clustering engine & a food-ordering platform.
-          </p>
-          <a
-            href={profile.github}
-            target="_blank"
-            rel="noreferrer"
-            data-cursor="hover"
-            className="group inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.22em] text-accent"
-          >
-            Browse the full archive on GitHub
-            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1" />
-          </a>
-        </div>
-      </Reveal>
     </section>
   );
+}
+
+function domainOnly(url: string) {
+  return url.replace("https://", "").replace(/\/$/, "");
 }
