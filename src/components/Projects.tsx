@@ -1,12 +1,106 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
-import Image from "next/image";
+import Image, { type StaticImageData } from "next/image";
 import { profile, projects } from "@/lib/site";
 import { GithubIcon } from "./BrandIcons";
 import SectionHeading from "./SectionHeading";
 import { EASE, Reveal } from "./motion-primitives";
+
+/* ————————————————————————————————————————————————————————————————
+   IMAGE GUARANTEE SYSTEM
+   1. Pehle real screenshot try hota hai:  p.image  →  /public path
+   2. File missing / 404 / empty hui toh onError automatically ek
+      designed inline-SVG "browser mockup" dikha deta hai (neeche
+      code mein hi bana hai — koi file nahi chahiye).
+      Broken image icon KABHI nahi dikhega.
+   Real screenshots ke liye: /public/images/projects/ mein jpgs
+   rakho, exact wahi filenames jo lib/site.ts mein likhi hain. Bas.
+———————————————————————————————————————————————————————————————— */
+
+type ProjectLike = {
+  index: string;
+  title: string;
+  live: string;
+  image: string | StaticImageData;
+};
+
+/** Theme-matched browser mockup — data-URI SVG. Na network, na file. */
+function buildMockupURI(p: Pick<ProjectLike, "index" | "title" | "live">): string {
+  const domain = p.live.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <rect width="1600" height="1000" fill="#e9e5da"/>
+  <circle cx="1330" cy="760" r="330" fill="none" stroke="#17140f" stroke-opacity="0.12" stroke-width="2"/>
+  <rect x="0" y="0" width="1600" height="76" fill="#f3f0e9"/>
+  <circle cx="52" cy="38" r="10" fill="#ff4d00"/>
+  <circle cx="86" cy="38" r="10" fill="#17140f" opacity="0.22"/>
+  <circle cx="120" cy="38" r="10" fill="#17140f" opacity="0.22"/>
+  <rect x="180" y="19" width="620" height="38" rx="19" fill="#ffffff" opacity="0.65" stroke="#17140f" stroke-opacity="0.15"/>
+  <text x="212" y="44" font-family="monospace" font-size="21" fill="#55524a">https://${domain}</text>
+  <text x="880" y="48" font-family="monospace" font-size="20" letter-spacing="4" fill="#8d887c">P/${p.index} — PREVIEW</text>
+  <rect x="880" y="150" width="620" height="380" rx="6" fill="#f3f0e9" stroke="#17140f" stroke-opacity="0.14"/>
+  <rect x="916" y="186" width="300" height="16" fill="#17140f" opacity="0.85"/>
+  <rect x="916" y="222" width="420" height="9" fill="#17140f" opacity="0.25"/>
+  <rect x="916" y="244" width="380" height="9" fill="#17140f" opacity="0.25"/>
+  <rect x="916" y="290" width="150" height="44" fill="#ff4d00"/>
+  <rect x="916" y="392" width="548" height="1.5" fill="#17140f" opacity="0.2"/>
+  <rect x="916" y="428" width="548" height="1.5" fill="#17140f" opacity="0.2"/>
+  <rect x="916" y="464" width="548" height="1.5" fill="#17140f" opacity="0.2"/>
+  <text x="90" y="620" font-family="Georgia, serif" font-size="400" fill="none" stroke="#17140f" stroke-opacity="0.16" stroke-width="3">${p.index}</text>
+  <text x="96" y="800" font-family="Georgia, serif" font-size="92" fill="#17140f">${p.title}</text>
+  <rect x="98" y="838" width="200" height="10" fill="#ff4d00"/>
+  <text x="98" y="912" font-family="monospace" font-size="25" letter-spacing="6" fill="#8d887c">LIVE PREVIEW — ${domain}</text>
+</svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+/**
+ * Real project image render karta hai; 404 / missing file par
+ * automatically inline mockup dikha deta hai. Load par smooth fade-in.
+ */
+function ProjectImage({
+  project,
+  priority,
+}: {
+  project: ProjectLike;
+  priority?: boolean;
+}) {
+  const hasSrc =
+    typeof project.image !== "string" || project.image.trim().length > 0;
+  const [failed, setFailed] = useState(!hasSrc);
+  const [loaded, setLoaded] = useState(false);
+
+  const sharedClasses = `object-cover transition-all duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05] ${
+    loaded ? "opacity-100" : "opacity-0"
+  }`;
+
+  if (failed) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- data-URI fallback, optimization not needed
+      <img
+        src={buildMockupURI(project)}
+        alt={`${project.title} — preview mockup`}
+        onLoad={() => setLoaded(true)}
+        className={`absolute inset-0 h-full w-full ${sharedClasses}`}
+      />
+    );
+  }
+
+  return (
+    <Image
+      src={project.image}
+      alt={`${project.title} — live website preview`}
+      fill
+      priority={priority}
+      sizes="(max-width: 1024px) 100vw, 58vw"
+      onLoad={() => setLoaded(true)}
+      onError={() => setFailed(true)}
+      className={sharedClasses}
+    />
+  );
+}
 
 export default function Projects() {
   return (
@@ -26,13 +120,14 @@ export default function Projects() {
               key={p.index}
               className="grid items-center gap-8 lg:grid-cols-12 lg:gap-14"
             >
-              {/* image */}
+              {/* image — guaranteed: real file, else auto mockup */}
               <motion.a
                 href={p.live}
                 target="_blank"
                 rel="noreferrer"
                 data-cursor
                 data-cursor-text="Visit"
+                aria-label={`Visit ${p.title} live site`}
                 initial={{ clipPath: "inset(0 0 100% 0)", y: 40 }}
                 whileInView={{ clipPath: "inset(0 0 0% 0)", y: 0 }}
                 viewport={{ once: true, margin: "-90px" }}
@@ -42,15 +137,9 @@ export default function Projects() {
                 }`}
               >
                 <div className="relative aspect-[16/10] w-full overflow-hidden">
-                  <Image
-                    src={p.image}
-                    alt={`${p.title} — live website preview`}
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 58vw"
-                    className="object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]"
-                  />
+                  <ProjectImage project={p} priority={i === 0} />
                   {/* sweep sheen */}
-                  <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-paper/25 to-transparent transition-transform duration-[1100ms] ease-out group-hover:translate-x-full" />
+                  <div className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-paper/25 to-transparent transition-transform duration-[1100ms] ease-out group-hover:translate-x-full" />
                 </div>
                 <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-paper/90 px-4 py-2 font-mono text-[9px] uppercase tracking-[0.22em] backdrop-blur">
                   <span className="h-1.5 w-1.5 rounded-full bg-accent" />
@@ -88,7 +177,7 @@ export default function Projects() {
                     {p.stack.map((t) => (
                       <span
                         key={t}
-                        className="border border-line px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-ink-2"
+                        className="border border-line px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-ink-2 transition-colors duration-300 hover:border-accent hover:text-accent"
                       >
                         {t}
                       </span>
