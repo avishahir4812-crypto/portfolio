@@ -11,25 +11,43 @@ import { EASE, Reveal } from "./motion-primitives";
 
 /* ————————————————————————————————————————————————————————————————
    IMAGE GUARANTEE SYSTEM
-   1. Pehle real screenshot try hota hai:  p.image  →  /public path
-   2. File missing / 404 / empty hui toh onError automatically ek
-      designed inline-SVG "browser mockup" dikha deta hai (neeche
-      code mein hi bana hai — koi file nahi chahiye).
-      Broken image icon KABHI nahi dikhega.
-   Real screenshots ke liye: /public/images/projects/ mein jpgs
-   rakho, exact wahi filenames jo lib/site.ts mein likhi hain. Bas.
+   Har project mein image HAMESHA dikhegi — koi exception nahi:
+
+   Case A: p.image valid path hai + file public/ mein hai
+           → real screenshot dikhta hai
+   Case B: p.image valid path hai par file missing/404 hai
+           → onError catch → branded browser-mockup dikhta hai
+   Case C: p.image field hi nahi hai / null / "" empty string hai
+           → directly mockup render hota hai (khali space KABHI nahi)
+
+   Real screenshots ke liye: /public/images/projects/ mein us image
+   field ke exact filename se jpg daal do. Bas.
 ———————————————————————————————————————————————————————————————— */
 
 type ProjectLike = {
-  index: string;
+  index: string | number;
   title: string;
   live: string;
-  image: string | StaticImageData;
+  image?: string | StaticImageData | null;
 };
+
+/** image field ko safely resolve karta hai — string, StaticImageData, ya null. */
+function resolveImageSrc(image: ProjectLike["image"]): string | StaticImageData | null {
+  // string path — empty / whitespace ko reject
+  if (typeof image === "string") {
+    return image.trim().length > 0 ? image : null;
+  }
+  // static import (StaticImageData) — object jisme src ho
+  if (image && typeof image === "object" && "src" in image) {
+    return image;
+  }
+  // undefined / null / kuch bhi ajeeb → no real image
+  return null;
+}
 
 /** Theme-matched browser mockup — data-URI SVG. Na network, na file. */
 function buildMockupURI(p: Pick<ProjectLike, "index" | "title" | "live">): string {
-  const domain = p.live.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  const domain = p.live.replace(/^https?:\/\//, "").replace(/\/$/, "") || "coming-soon.dev";
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
   <rect width="1600" height="1000" fill="#e9e5da"/>
   <circle cx="1330" cy="760" r="330" fill="none" stroke="#17140f" stroke-opacity="0.12" stroke-width="2"/>
@@ -57,8 +75,8 @@ function buildMockupURI(p: Pick<ProjectLike, "index" | "title" | "live">): strin
 }
 
 /**
- * Real project image render karta hai; 404 / missing file par
- * automatically inline mockup dikha deta hai. Load par smooth fade-in.
+ * Real project image render karta hai; image missing / empty / 404 —
+ * kisi bhi haalat mein branded mockup dikhata hai. Khali space kabhi nahi.
  */
 function ProjectImage({
   project,
@@ -67,37 +85,35 @@ function ProjectImage({
   project: ProjectLike;
   priority?: boolean;
 }) {
-  const hasSrc =
-    typeof project.image !== "string" || project.image.trim().length > 0;
-  const [failed, setFailed] = useState(!hasSrc);
+  const resolvedSrc = resolveImageSrc(project.image);
+  const [failed, setFailed] = useState(resolvedSrc === null);
   const [loaded, setLoaded] = useState(false);
 
-  const sharedClasses = `object-cover transition-all duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05] ${
-    loaded ? "opacity-100" : "opacity-0"
-  }`;
+  const motionClasses =
+    "object-cover transition-all duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]";
 
-  if (failed) {
+  // Fallback mockup — data-URI hai, instantly render hota hai (no fade needed)
+  if (failed || resolvedSrc === null) {
     return (
       // eslint-disable-next-line @next/next/no-img-element -- data-URI fallback, optimization not needed
       <img
         src={buildMockupURI(project)}
-        alt={`${project.title} — preview mockup`}
-        onLoad={() => setLoaded(true)}
-        className={`absolute inset-0 h-full w-full ${sharedClasses}`}
+        alt={`${project.title} — preview`}
+        className={`absolute inset-0 h-full w-full ${motionClasses}`}
       />
     );
   }
 
   return (
     <Image
-      src={project.image}
+      src={resolvedSrc}
       alt={`${project.title} — live website preview`}
       fill
       priority={priority}
       sizes="(max-width: 1024px) 100vw, 58vw"
       onLoad={() => setLoaded(true)}
       onError={() => setFailed(true)}
-      className={sharedClasses}
+      className={`${motionClasses} ${loaded ? "opacity-100" : "opacity-0"}`}
     />
   );
 }
@@ -120,7 +136,7 @@ export default function Projects() {
               key={p.index}
               className="grid items-center gap-8 lg:grid-cols-12 lg:gap-14"
             >
-              {/* image — guaranteed: real file, else auto mockup */}
+              {/* image — guaranteed in EVERY case, no empty space */}
               <motion.a
                 href={p.live}
                 target="_blank"
