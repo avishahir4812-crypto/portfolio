@@ -50,19 +50,19 @@ type ProjectFull = ProjectLike & {
 const FUEL_FLEET: ProjectFull = {
   index: "01",
   title: "FuelFleet",
-  live: "https://fuelfleet.vercel.app", // ← apni REAL FuelFleet link yahan daalo
+  live: "https://app-rosy-eight-13.vercel.app/",
   image: "/images/projects/fuelfleet.jpg",
   category: "Fleet SaaS · Fuel Intelligence",
   year: "2026",
   description:
-    "Fuel-expense intelligence for vehicle fleets. Every vehicle runs on a month-wise fuel ledger, and refuelling needs proof — drivers must upload before/after dashboard photos capturing the fuel rate and meter at every fill, so claims are photo-verified, not taken on trust. Managers get anomaly flags, per-vehicle mileage trends and exportable monthly hisaab; drivers, managers and accounts stay aligned through built-in team chat.",
+    "Vehicle & fuel management SaaS for commercial fleets. Every fill-up is photo-verified — drivers snap before/after dashboard photos (plus an optional pump-meter shot) right at the pump, while the app validates the maths and odometer instantly and raises automatic fraud flags. Owners watch every vehicle on clean month-wise spend & litre graphs, and the entire fleet — owners and drivers — talks in one secure group chat with @mentions. Trilingual by design: English, हिन्दी and ગુજરાતી.",
   stack: [
     "Next.js",
     "TypeScript",
     "PostgreSQL",
-    "Drizzle ORM",
-    "Image Verification",
+    "Photo Verification",
     "Realtime Chat",
+    "EN · HI · GU i18n",
   ],
 };
 
@@ -96,8 +96,12 @@ function buildMockupURI(p: Pick<ProjectLike, "index" | "title" | "live">): strin
 }
 
 /**
- * Real project image render karta hai; 404 / missing file par
- * automatically inline mockup dikha deta hai. Load par smooth fade-in.
+ * DUAL-LAYER GUARANTEE — image box KABHI blank/empty nahi rehta:
+ * 1. Pehle data-URI mockup turant render hota hai (base layer — na
+ *    network, na file, na onLoad ka wait).
+ * 2. Real screenshot (/public) load hote hi uske UPAR fade-in ho jata
+ *    hai; 404 / missing hui toh onError se wo layer hat jati hai aur
+ *    neeche ka mockup as-is dikhta rehta hai.
  */
 function ProjectImage({
   project,
@@ -111,33 +115,33 @@ function ProjectImage({
   const [failed, setFailed] = useState(!hasSrc);
   const [loaded, setLoaded] = useState(false);
 
-  const sharedClasses = `object-cover transition-all duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05] ${
-    loaded ? "opacity-100" : "opacity-0"
-  }`;
-
-  if (failed) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element -- data-URI fallback, optimization not needed
-      <img
-        src={buildMockupURI(project)}
-        alt={`${project.title} — preview mockup`}
-        onLoad={() => setLoaded(true)}
-        className={`absolute inset-0 h-full w-full ${sharedClasses}`}
-      />
-    );
-  }
+  const motionClasses =
+    "object-cover transition-all duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]";
 
   return (
-    <Image
-      src={project.image}
-      alt={`${project.title} — live website preview`}
-      fill
-      priority={priority}
-      sizes="(max-width: 1024px) 100vw, 58vw"
-      onLoad={() => setLoaded(true)}
-      onError={() => setFailed(true)}
-      className={sharedClasses}
-    />
+    <>
+      {/* base layer — hamesha visible placeholder */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- data-URI fallback, optimization not needed */}
+      <img
+        src={buildMockupURI(project)}
+        alt=""
+        aria-hidden
+        className={`absolute inset-0 h-full w-full ${motionClasses}`}
+      />
+      {/* real screenshot — load hone par mockup ko cover karta hai */}
+      {!failed && (
+        <Image
+          src={project.image}
+          alt={`${project.title} — live website preview`}
+          fill
+          priority={priority}
+          sizes="(max-width: 1024px) 100vw, 58vw"
+          onLoad={() => setLoaded(true)}
+          onError={() => setFailed(true)}
+          className={`${motionClasses} ${loaded ? "opacity-100" : "opacity-0"}`}
+        />
+      )}
+    </>
   );
 }
 
