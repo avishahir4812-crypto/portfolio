@@ -3,18 +3,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
-import Image from "next/image";
 import { profile, projects } from "@/lib/site";
 import { GithubIcon } from "./BrandIcons";
 import SectionHeading from "./SectionHeading";
 import { EASE, Reveal } from "./motion-primitives";
-
-/*
-   DUAL-LAYER IMAGE SYSTEM
-   Layer 1 (bottom): Professional SVG mockup — hamesha visible, instantly
-   Layer 2 (top):    Real screenshot — load hone par cover karega, 404 par hat jayega
-   Result: Har project mein DeltaDesk wala dabba dikhega. Khali space KABHI nahi.
-*/
 
 function buildMockupSVG(
   title: string,
@@ -22,8 +14,14 @@ function buildMockupSVG(
   index: string | number
 ): string {
   const d = domain || "project.live";
-  const safeTitle = String(title).replace(/&/g, "&amp;").replace(/</g, "&lt;");
-  const safeDomain = String(d).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  const safeTitle = String(title)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  const safeDomain = String(d)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
   <rect width="1600" height="1000" fill="#e9e5da"/>
@@ -60,32 +58,33 @@ function ProjectImage({
 }) {
   const hasImage = typeof p.image === "string" && p.image.trim().length > 0;
   const [imgError, setImgError] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   const domain = (p.live || "").replace(/^https?:\/\//, "").replace(/\/$/, "");
   const cls =
-    "object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]";
+    "absolute inset-0 h-full w-full object-cover transition-all duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]";
 
   return (
     <>
-      {/* LAYER 1: Mockup — hamesha render, hamesha visible */}
+      {/* Base mockup — always visible */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={buildMockupSVG(p.title, domain, p.index)}
         alt=""
         aria-hidden="true"
-        className={`absolute inset-0 h-full w-full ${cls}`}
+        className={cls}
       />
 
-      {/* LAYER 2: Real screenshot — sirf tab render jab path valid + no error */}
+      {/* Real screenshot — plain img keeps render stable even on bad paths */}
       {hasImage && !imgError && (
-        <Image
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
           src={p.image}
           alt={`${p.title} — live website preview`}
-          fill
-          priority={priority}
-          sizes="(max-width: 1024px) 100vw, 58vw"
+          loading={priority ? "eager" : "lazy"}
+          onLoad={() => setLoaded(true)}
           onError={() => setImgError(true)}
-          className={`relative z-10 ${cls}`}
+          className={`${cls} z-10 ${loaded ? "opacity-100" : "opacity-0"}`}
         />
       )}
     </>
@@ -113,7 +112,6 @@ export default function Projects() {
               key={`${p.index}-${p.title}`}
               className="grid items-center gap-8 lg:grid-cols-12 lg:gap-14"
             >
-              {/* ─── IMAGE BOX ─── */}
               <motion.a
                 href={p.live}
                 target="_blank"
@@ -131,22 +129,17 @@ export default function Projects() {
               >
                 <div className="relative aspect-[16/10] w-full overflow-hidden">
                   <ProjectImage p={p} priority={i < 2} />
-                  {/* sweep sheen */}
                   <div className="pointer-events-none absolute inset-0 z-20 -translate-x-full bg-gradient-to-r from-transparent via-paper/25 to-transparent transition-transform duration-[1100ms] ease-out group-hover:translate-x-full" />
                 </div>
-                {/* live badge */}
                 <div className="absolute left-4 top-4 z-20 flex items-center gap-2 rounded-full bg-paper/90 px-4 py-2 font-mono text-[9px] uppercase tracking-[0.22em] backdrop-blur">
                   <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                  Live —{" "}
-                  {p.live.replace("https://", "").replace(/\/$/, "")}
+                  Live — {p.live.replace("https://", "").replace(/\/$/, "")}
                 </div>
-                {/* index watermark */}
                 <span className="pointer-events-none absolute -bottom-1 right-2 z-20 font-display text-[7rem] font-medium leading-none text-outline opacity-60 md:text-[9rem]">
                   {p.index}
                 </span>
               </motion.a>
 
-              {/* ─── CONTENT ─── */}
               <div className={`lg:col-span-5 ${flip ? "lg:order-1" : ""}`}>
                 <Reveal delay={0.1}>
                   <div className="flex items-center gap-4 font-mono text-[10px] uppercase tracking-[0.25em] text-ink-3">
@@ -213,8 +206,7 @@ export default function Projects() {
       <Reveal>
         <div className="mt-16 flex flex-col items-center gap-4 border-t border-line pt-10 text-center">
           <p className="font-display text-2xl italic text-ink-2 md:text-3xl">
-            Plus the internal builds — AQI Calculator, Map Clustering
-            engine & a food-ordering platform.
+            Plus the internal builds — AQI Calculator, Map Clustering engine & a food-ordering platform.
           </p>
           <a
             href={profile.github}
