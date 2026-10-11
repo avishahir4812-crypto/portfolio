@@ -66,18 +66,13 @@ function ProjectImage({
 
   return (
     <>
-      {/* Base mockup — always visible */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={buildMockupSVG(p.title, domain, p.index)}
         alt=""
         aria-hidden="true"
         className={cls}
       />
-
-      {/* Real screenshot — plain img keeps render stable even on bad paths */}
       {hasImage && !imgError && (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={p.image}
           alt={`${p.title} — live website preview`}
