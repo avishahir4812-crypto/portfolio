@@ -1,125 +1,202 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
-import Image from "next/image";
+import Image, { type StaticImageData } from "next/image";
 import { profile, projects } from "@/lib/site";
 import { GithubIcon } from "./BrandIcons";
 import SectionHeading from "./SectionHeading";
 import { EASE, Reveal } from "./motion-primitives";
 
-/** 
- * PROFESSIONAL MOCKUP GENERATOR (DeltaDesk Style)
- * Bilkul aapke screenshot jaisa look dene ke liye.
- */
-function buildMockupSVG(title: string, domain: string, index: string | number): string {
-  const d = domain || "project.live";
+/* ————————————————————————————————————————————————————————————————
+   IMAGE GUARANTEE SYSTEM
+   1. Pehle real screenshot try hota hai:  p.image  →  /public path
+   2. File missing / 404 / empty hui toh onError automatically ek
+      designed inline-SVG "browser mockup" dikha deta hai (neeche
+      code mein hi bana hai — koi file nahi chahiye).
+      Broken image icon KABHI nahi dikhega.
+   Real screenshots ke liye: /public/images/projects/ mein jpgs
+   rakho, exact wahi filenames jo lib/site.ts mein likhi hain. Bas.
+———————————————————————————————————————————————————————————————— */
+
+type ProjectLike = {
+  index: string;
+  title: string;
+  live: string;
+  image: string | StaticImageData;
+};
+
+type ProjectFull = ProjectLike & {
+  category: string;
+  year: string;
+  description: string;
+  stack: string[];
+};
+
+/* ————————————————————————————————————————————————————————————————
+   ★ ADDED PROJECT — FUELFLEET (P/01)
+   Naya project seedha ISI file mein hardcode kar diya gaya hai:
+   • Hamesha list mein SABSE PEHLE dikhega
+   • Baaki projects (@/lib/site se aane wale) automatically
+     02, 03, 04… renumber ho jayenge — lib/site.ts ko touch karne
+     ki zaroorat NAHI hai
+   • Agar baad mein FuelFleet ko lib/site.ts mein bhi add kar doge,
+     toh duplicate nahi aayega (title se auto-filter ho jata hai)
+   Bas `live` mein apni REAL FuelFleet link daal do.
+   Screenshot: public/images/projects/fuelfleet.jpg
+   (missing hui toh aapka apna mockup fallback sambhal lega)
+———————————————————————————————————————————————————————————————— */
+const FUEL_FLEET: ProjectFull = {
+  index: "01",
+  title: "FuelFleet",
+  live: "https://fuelfleet.vercel.app", // ← apni REAL FuelFleet link yahan daalo
+  image: "/images/projects/fuelfleet.jpg",
+  category: "Fleet SaaS · Fuel Intelligence",
+  year: "2026",
+  description:
+    "Fuel-expense intelligence for vehicle fleets. Every vehicle runs on a month-wise fuel ledger, and refuelling needs proof — drivers must upload before/after dashboard photos capturing the fuel rate and meter at every fill, so claims are photo-verified, not taken on trust. Managers get anomaly flags, per-vehicle mileage trends and exportable monthly hisaab; drivers, managers and accounts stay aligned through built-in team chat.",
+  stack: [
+    "Next.js",
+    "TypeScript",
+    "PostgreSQL",
+    "Drizzle ORM",
+    "Image Verification",
+    "Realtime Chat",
+  ],
+};
+
+/** Theme-matched browser mockup — data-URI SVG. Na network, na file. */
+function buildMockupURI(p: Pick<ProjectLike, "index" | "title" | "live">): string {
+  const domain = p.live.replace(/^https?:\/\//, "").replace(/\/$/, "");
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
-    <rect width="1600" height="1000" fill="#f3f0e9"/>
-    <!-- Large Background Index -->
-    <text x="800" y="650" font-family="Georgia, serif" font-size="700" text-anchor="middle" fill="none" stroke="#17140f" stroke-opacity="0.06" stroke-width="2">${index}</text>
-    
-    <!-- Browser Chrome -->
-    <rect x="0" y="0" width="1600" height="60" fill="#e9e5da"/>
-    <circle cx="40" cy="30" r="8" fill="#ff4d00"/>
-    <circle cx="70" cy="30" r="8" fill="#17140f" opacity="0.1"/>
-    <circle cx="100" cy="30" r="8" fill="#17140f" opacity="0.1"/>
-    <rect x="150" y="15" width="500" height="30" rx="15" fill="#ffffff" opacity="0.5"/>
-    <text x="170" y="36" font-family="monospace" font-size="16" fill="#8d887c">https://${d}</text>
-    
-    <!-- Content Mockup -->
-    <text x="100" y="740" font-family="Georgia, serif" font-size="120" font-weight="bold" fill="#17140f">${title}</text>
-    <rect x="100" y="780" width="180" height="12" fill="#ff4d00"/>
-    <text x="100" y="860" font-family="monospace" font-size="24" letter-spacing="4" fill="#8d887c">LIVE PREVIEW — ${d}</text>
-    
-    <!-- Abstract UI Elements -->
-    <rect x="950" y="200" width="500" height="350" rx="4" fill="#ffffff" stroke="#17140f" stroke-opacity="0.08"/>
-    <rect x="980" y="240" width="280" height="20" fill="#17140f" opacity="0.7"/>
-    <rect x="980" y="280" width="400" height="8" fill="#17140f" opacity="0.1"/>
-    <rect x="980" y="360" width="140" height="40" fill="#ff4d00"/>
-    <circle cx="1300" cy="750" r="300" fill="none" stroke="#17140f" stroke-opacity="0.05" stroke-width="1.5"/>
-  </svg>`;
+  <rect width="1600" height="1000" fill="#e9e5da"/>
+  <circle cx="1330" cy="760" r="330" fill="none" stroke="#17140f" stroke-opacity="0.12" stroke-width="2"/>
+  <rect x="0" y="0" width="1600" height="76" fill="#f3f0e9"/>
+  <circle cx="52" cy="38" r="10" fill="#ff4d00"/>
+  <circle cx="86" cy="38" r="10" fill="#17140f" opacity="0.22"/>
+  <circle cx="120" cy="38" r="10" fill="#17140f" opacity="0.22"/>
+  <rect x="180" y="19" width="620" height="38" rx="19" fill="#ffffff" opacity="0.65" stroke="#17140f" stroke-opacity="0.15"/>
+  <text x="212" y="44" font-family="monospace" font-size="21" fill="#55524a">https://${domain}</text>
+  <text x="880" y="48" font-family="monospace" font-size="20" letter-spacing="4" fill="#8d887c">P/${p.index} — PREVIEW</text>
+  <rect x="880" y="150" width="620" height="380" rx="6" fill="#f3f0e9" stroke="#17140f" stroke-opacity="0.14"/>
+  <rect x="916" y="186" width="300" height="16" fill="#17140f" opacity="0.85"/>
+  <rect x="916" y="222" width="420" height="9" fill="#17140f" opacity="0.25"/>
+  <rect x="916" y="244" width="380" height="9" fill="#17140f" opacity="0.25"/>
+  <rect x="916" y="290" width="150" height="44" fill="#ff4d00"/>
+  <rect x="916" y="392" width="548" height="1.5" fill="#17140f" opacity="0.2"/>
+  <rect x="916" y="428" width="548" height="1.5" fill="#17140f" opacity="0.2"/>
+  <rect x="916" y="464" width="548" height="1.5" fill="#17140f" opacity="0.2"/>
+  <text x="90" y="620" font-family="Georgia, serif" font-size="400" fill="none" stroke="#17140f" stroke-opacity="0.16" stroke-width="3">${p.index}</text>
+  <text x="96" y="800" font-family="Georgia, serif" font-size="92" fill="#17140f">${p.title}</text>
+  <rect x="98" y="838" width="200" height="10" fill="#ff4d00"/>
+  <text x="98" y="912" font-family="monospace" font-size="25" letter-spacing="6" fill="#8d887c">LIVE PREVIEW — ${domain}</text>
+</svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
-function ProjectImage({ p, priority }: { p: (typeof projects)[number]; priority?: boolean }) {
-  // Logic: Agar image path hai, toh try karo, warna seedha mockup dikhao
-  const [error, setError] = useState(false);
-  
-  const domain = (p.live || "").replace(/^https?:\/\//, "").replace(/\/$/, "");
-  const imgCls = "object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]";
+/**
+ * Real project image render karta hai; 404 / missing file par
+ * automatically inline mockup dikha deta hai. Load par smooth fade-in.
+ */
+function ProjectImage({
+  project,
+  priority,
+}: {
+  project: ProjectLike;
+  priority?: boolean;
+}) {
+  const hasSrc =
+    typeof project.image !== "string" || project.image.trim().length > 0;
+  const [failed, setFailed] = useState(!hasSrc);
+  const [loaded, setLoaded] = useState(false);
 
-  // Agar error hai ya image path empty hai, toh mockup dikhao
-  if (error || !p.image) {
+  const sharedClasses = `object-cover transition-all duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05] ${
+    loaded ? "opacity-100" : "opacity-0"
+  }`;
+
+  if (failed) {
     return (
-      <img 
-        src={buildMockupSVG(p.title, domain, p.index)} 
-        alt={p.title} 
-        className={`absolute inset-0 h-full w-full ${imgCls}`}
+      // eslint-disable-next-line @next/next/no-img-element -- data-URI fallback, optimization not needed
+      <img
+        src={buildMockupURI(project)}
+        alt={`${project.title} — preview mockup`}
+        onLoad={() => setLoaded(true)}
+        className={`absolute inset-0 h-full w-full ${sharedClasses}`}
       />
     );
   }
 
   return (
     <Image
-      src={p.image}
-      alt={p.title}
+      src={project.image}
+      alt={`${project.title} — live website preview`}
       fill
       priority={priority}
       sizes="(max-width: 1024px) 100vw, 58vw"
-      onError={() => setError(true)}
-      className={imgCls}
+      onLoad={() => setLoaded(true)}
+      onError={() => setFailed(true)}
+      className={sharedClasses}
     />
   );
 }
 
 export default function Projects() {
+  // FuelFleet hamesha pehle; baaki lib/site wale auto-renumber (02, 03…).
+  // Agar FuelFleet lib/site mein bhi pada ho, duplicate nahi aata.
+  const list: ProjectFull[] = [
+    FUEL_FLEET,
+    ...projects.filter((p) => p.title !== FUEL_FLEET.title),
+  ].map((p, i) => ({ ...p, index: String(i + 1).padStart(2, "0") }));
+
   return (
     <section id="work" className="mx-auto max-w-[1440px] px-6 py-14 md:px-12 md:py-24">
       <SectionHeading
-        index="01"
+        index="05"
         tag="Selected Work 2024 — 2026"
         title="Selected work."
         description="Every project below is deployed and live — open them, resize them, inspect the network tab. They hold up."
       />
 
       <div className="space-y-16 md:space-y-24">
-        {projects.map((p, i) => {
+        {list.map((p, i) => {
           const flip = i % 2 === 1;
           return (
-            <article key={p.index} className="grid items-center gap-8 lg:grid-cols-12 lg:gap-14">
-              {/* IMAGE COLUMN - Fixed to never be empty */}
+            <article
+              key={`${p.index}-${p.title}`}
+              className="grid items-center gap-8 lg:grid-cols-12 lg:gap-14"
+            >
+              {/* image — guaranteed: real file, else auto mockup */}
               <motion.a
                 href={p.live}
                 target="_blank"
                 rel="noreferrer"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.8, ease: EASE }}
-                className={`group relative block overflow-hidden rounded-[4px] bg-paper-2 lg:col-span-7 ${flip ? "lg:order-2" : ""}`}
+                data-cursor
+                data-cursor-text="Visit"
+                aria-label={`Visit ${p.title} live site`}
+                initial={{ clipPath: "inset(0 0 100% 0)", y: 40 }}
+                whileInView={{ clipPath: "inset(0 0 0% 0)", y: 0 }}
+                viewport={{ once: true, margin: "-90px" }}
+                transition={{ duration: 1, ease: EASE }}
+                className={`group relative block overflow-hidden rounded-[2px] bg-paper-2 lg:col-span-7 ${
+                  flip ? "lg:order-2" : ""
+                }`}
               >
-                <div className="relative aspect-[16/10] w-full overflow-hidden border border-line-2">
-                  <ProjectImage p={p} priority={i < 2} />
-                  
-                  {/* Sheen Effect */}
-                  <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-[1200ms] group-hover:translate-x-full" />
+                <div className="relative aspect-[16/10] w-full overflow-hidden">
+                  <ProjectImage project={p} priority={i === 0} />
+                  {/* sweep sheen */}
+                  <div className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-paper/25 to-transparent transition-transform duration-[1100ms] ease-out group-hover:translate-x-full" />
                 </div>
-
-                {/* Live Badge */}
-                <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-paper/90 px-4 py-2 font-mono text-[9px] uppercase tracking-[0.22em] backdrop-blur border border-line">
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+                <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-paper/90 px-4 py-2 font-mono text-[9px] uppercase tracking-[0.22em] backdrop-blur">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
                   Live — {p.live.replace("https://", "").replace(/\/$/, "")}
                 </div>
-                
-                {/* Index Watermark */}
-                <span className="pointer-events-none absolute -bottom-1 right-2 font-display text-[7rem] font-medium leading-none text-outline opacity-40 md:text-[9rem]">
+                <span className="pointer-events-none absolute -bottom-1 right-2 font-display text-[7rem] font-medium leading-none text-outline opacity-60 md:text-[9rem]">
                   {p.index}
                 </span>
               </motion.a>
 
-              {/* CONTENT COLUMN */}
+              {/* content */}
               <div className={`lg:col-span-5 ${flip ? "lg:order-1" : ""}`}>
                 <Reveal delay={0.1}>
                   <div className="flex items-center gap-4 font-mono text-[10px] uppercase tracking-[0.25em] text-ink-3">
@@ -130,36 +207,49 @@ export default function Projects() {
                     <span>{p.year}</span>
                   </div>
                 </Reveal>
-                
                 <Reveal delay={0.18}>
                   <h3 className="mt-5 font-display text-4xl font-medium tracking-tight md:text-5xl">
-                    {p.title}<span className="text-accent">.</span>
+                    {p.title}
+                    <span className="text-accent">.</span>
                   </h3>
                 </Reveal>
-
                 <Reveal delay={0.26}>
                   <p className="mt-5 text-[15px] leading-relaxed text-ink-2">
                     {p.description}
                   </p>
                 </Reveal>
-
                 <Reveal delay={0.34}>
                   <div className="mt-6 flex flex-wrap gap-2">
                     {p.stack.map((t) => (
-                      <span key={t} className="border border-line px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-ink-2">
+                      <span
+                        key={t}
+                        className="border border-line px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-ink-2 transition-colors duration-300 hover:border-accent hover:text-accent"
+                      >
                         {t}
                       </span>
                     ))}
                   </div>
                 </Reveal>
-
                 <Reveal delay={0.42}>
                   <div className="mt-8 flex items-center gap-6">
-                    <a href={p.live} target="_blank" rel="noreferrer" className="group inline-flex items-center gap-2 border-b-2 border-ink pb-1 font-mono text-[11px] uppercase tracking-[0.2em] transition-colors hover:border-accent hover:text-accent">
+                    <a
+                      href={p.live}
+                      target="_blank"
+                      rel="noreferrer"
+                      data-cursor="hover"
+                      className="group inline-flex items-center gap-2 border-b-2 border-ink pb-1 font-mono text-[11px] uppercase tracking-[0.2em] transition-colors duration-300 hover:border-accent hover:text-accent"
+                    >
                       Visit Live Site
-                      <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
+                      <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1" />
                     </a>
-                    <a href={profile.github} target="_blank" rel="noreferrer" className="text-ink-2 transition-all hover:-translate-y-1 hover:text-ink">
+                    <a
+                      href={profile.github}
+                      target="_blank"
+                      rel="noreferrer"
+                      data-cursor="hover"
+                      aria-label={`${p.title} source code on GitHub`}
+                      className="text-ink-2 transition-all duration-300 hover:-translate-y-1 hover:text-ink"
+                    >
                       <GithubIcon className="h-5 w-5" />
                     </a>
                   </div>
@@ -169,6 +259,24 @@ export default function Projects() {
           );
         })}
       </div>
+
+      <Reveal>
+        <div className="mt-16 flex flex-col items-center gap-4 border-t border-line pt-10 text-center">
+          <p className="font-display text-2xl italic text-ink-2 md:text-3xl">
+            Plus the internal builds — AQI Calculator, Map Clustering engine & a food-ordering platform.
+          </p>
+          <a
+            href={profile.github}
+            target="_blank"
+            rel="noreferrer"
+            data-cursor="hover"
+            className="group inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.22em] text-accent"
+          >
+            Browse the full archive on GitHub
+            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1" />
+          </a>
+        </div>
+      </Reveal>
     </section>
   );
 }
