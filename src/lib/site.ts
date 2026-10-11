@@ -115,28 +115,40 @@ export const skills: Skill[] = [
 
 export const services = [
   {
-    index: "01",
+  index: "01",
+  title: "FuelFleet",
+  category: "Fleet SaaS · Fuel Intelligence",
+  year: "2026",
+  description:
+    "Vehicle & fuel management SaaS for commercial fleets. Every fill-up is photo-verified — drivers snap before/after dashboard photos right at the pump, while the app validates the maths and odometer instantly and raises automatic fraud flags. Owners watch every vehicle on clean month-wise spend & litre graphs, and the entire fleet talks in one secure group chat. Trilingual by design: English, हिन्दी and ગુજરાતી.",
+  stack: ["Next.js", "TypeScript", "PostgreSQL", "Photo Verification", "Realtime Chat", "EN · HI · GU i18n"],
+  image: "/images/projects/fuelfleet.jpg",
+  live: "https://app-rosy-eight-13.vercel.app/",
+  accent: "#ff4d00",
+},
+  {
+    index: "02",
     title: "Full Stack Product Engineering",
     description:
       "End-to-end product builds — database schema, REST APIs, authentication and a polished React frontend, shipped as one coherent system.",
     tags: ["Django / FastAPI", "React & Next.js", "Auth & RBAC"],
   },
   {
-    index: "02",
+    index: "03",
     title: "Backend & API Architecture",
     description:
       "Clean, documentated REST architectures with JWT/OAuth security, optimized queries, proper error handling and Swagger docs your team will love.",
     tags: ["REST Design", "Query Optimization", "Swagger"],
   },
   {
-    index: "03",
+    index: "04",
     title: "AI-Powered Features",
     description:
       "Practical AI integration — NLP pipelines, resume parsing, semantic matching with sentence transformers, and LLM-assisted workflows.",
     tags: ["spaCy", "NLP Pipelines", "Embeddings"],
   },
   {
-    index: "04",
+    index: "05",
     title: "UI Engineering & Motion",
     description:
       "Interfaces that feel expensive — responsive layouts, design systems, micro-interactions and scroll choreography that convert visitors into clients.",
