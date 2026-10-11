@@ -8,46 +8,135 @@ import { GithubIcon } from "./BrandIcons";
 import SectionHeading from "./SectionHeading";
 import { EASE, Reveal } from "./motion-primitives";
 
-function buildMockupSVG(
-  title: string,
-  domain: string,
-  index: string | number
-): string {
+/**
+ * FIX: the old version rendered this mock "browser frame" through a
+ * `data:image/svg+xml,...` URI inside an <img> tag. Those encoded SVG data-URIs
+ * are notoriously fragile (CSP img-src policies, ad-blockers, encoding edge
+ * cases) — and whenever it failed to paint AND the real screenshot URL was
+ * empty/broken, nothing drew at all, so the whole image box looked missing
+ * (your projects 1, 3, 5), while rows with working screenshots (2, 4, 6) still
+ * showed. Rendering the artwork as a REAL inline <svg> element makes it part of
+ * the DOM, so it always paints — and JSX auto-escapes the text, so the manual
+ * entity-escaping is gone too.
+ */
+function MockupFrame({
+  title,
+  domain,
+  index,
+}: {
+  title: string;
+  domain: string;
+  index: string;
+}) {
   const d = domain || "project.live";
-  const safeTitle = String(title)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  const safeDomain = String(d)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
-  <rect width="1600" height="1000" fill="#e9e5da"/>
-  <text x="800" y="620" font-family="Georgia,serif" font-size="600" text-anchor="middle" fill="none" stroke="#17140f" stroke-opacity="0.06" stroke-width="2">${index}</text>
-  <rect width="1600" height="60" fill="#f3f0e9"/>
-  <circle cx="40" cy="30" r="8" fill="#ff4d00"/>
-  <circle cx="68" cy="30" r="8" fill="#17140f" opacity="0.12"/>
-  <circle cx="96" cy="30" r="8" fill="#17140f" opacity="0.12"/>
-  <rect x="140" y="14" width="480" height="32" rx="16" fill="#fff" opacity="0.5" stroke="#17140f" stroke-opacity="0.12"/>
-  <text x="164" y="36" font-family="ui-monospace,monospace" font-size="15" fill="#8d887c">https://${safeDomain}</text>
-  <text x="880" y="42" font-family="ui-monospace,monospace" font-size="16" letter-spacing="4" fill="#8d887c">P/${index} — PREVIEW</text>
-  <rect x="880" y="160" width="580" height="360" rx="6" fill="#f3f0e9" stroke="#17140f" stroke-opacity="0.1"/>
-  <rect x="916" y="200" width="280" height="18" fill="#17140f" opacity="0.75"/>
-  <rect x="916" y="236" width="400" height="8" fill="#17140f" opacity="0.15"/>
-  <rect x="916" y="256" width="340" height="8" fill="#17140f" opacity="0.15"/>
-  <rect x="916" y="300" width="140" height="42" rx="2" fill="#ff4d00"/>
-  <rect x="916" y="390" width="508" height="1" fill="#17140f" opacity="0.12"/>
-  <rect x="916" y="424" width="508" height="1" fill="#17140f" opacity="0.12"/>
-  <rect x="916" y="458" width="508" height="1" fill="#17140f" opacity="0.12"/>
-  <text x="100" y="780" font-family="Georgia,serif" font-size="100" font-weight="bold" fill="#17140f">${safeTitle}</text>
-  <rect x="100" y="810" width="180" height="10" fill="#ff4d00"/>
-  <text x="100" y="890" font-family="ui-monospace,monospace" font-size="22" letter-spacing="5" fill="#8d887c">LIVE PREVIEW — ${safeDomain}</text>
-  <circle cx="1300" cy="760" r="280" fill="none" stroke="#17140f" stroke-opacity="0.05" stroke-width="1.5"/>
-</svg>`;
-  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  return (
+    <svg
+      viewBox="0 0 1600 1000"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+      className="absolute inset-0 block h-full w-full"
+    >
+      <rect width="1600" height="1000" fill="#e9e5da" />
+      <text
+        x="800"
+        y="620"
+        fontFamily="Georgia, serif"
+        fontSize="600"
+        textAnchor="middle"
+        fill="none"
+        stroke="#17140f"
+        strokeOpacity="0.06"
+        strokeWidth="2"
+      >
+        {index}
+      </text>
+      <rect width="1600" height="60" fill="#f3f0e9" />
+      <circle cx="40" cy="30" r="8" fill="#ff4d00" />
+      <circle cx="68" cy="30" r="8" fill="#17140f" opacity="0.12" />
+      <circle cx="96" cy="30" r="8" fill="#17140f" opacity="0.12" />
+      <rect
+        x="140"
+        y="14"
+        width="480"
+        height="32"
+        rx="16"
+        fill="#ffffff"
+        opacity="0.5"
+        stroke="#17140f"
+        strokeOpacity="0.12"
+      />
+      <text
+        x="164"
+        y="36"
+        fontFamily="ui-monospace, monospace"
+        fontSize="15"
+        fill="#8d887c"
+      >
+        https://{d}
+      </text>
+      <text
+        x="880"
+        y="42"
+        fontFamily="ui-monospace, monospace"
+        fontSize="16"
+        letterSpacing="4"
+        fill="#8d887c"
+      >
+        P/{index} — PREVIEW
+      </text>
+      <rect
+        x="880"
+        y="160"
+        width="580"
+        height="360"
+        rx="6"
+        fill="#f3f0e9"
+        stroke="#17140f"
+        strokeOpacity="0.1"
+      />
+      <rect x="916" y="200" width="280" height="18" fill="#17140f" opacity="0.75" />
+      <rect x="916" y="236" width="400" height="8" fill="#17140f" opacity="0.15" />
+      <rect x="916" y="256" width="340" height="8" fill="#17140f" opacity="0.15" />
+      <rect x="916" y="300" width="140" height="42" rx="2" fill="#ff4d00" />
+      <rect x="916" y="390" width="508" height="1" fill="#17140f" opacity="0.12" />
+      <rect x="916" y="424" width="508" height="1" fill="#17140f" opacity="0.12" />
+      <rect x="916" y="458" width="508" height="1" fill="#17140f" opacity="0.12" />
+      <text
+        x="100"
+        y="780"
+        fontFamily="Georgia, serif"
+        fontSize="100"
+        fontWeight="bold"
+        fill="#17140f"
+      >
+        {title}
+      </text>
+      <rect x="100" y="810" width="180" height="10" fill="#ff4d00" />
+      <text
+        x="100"
+        y="890"
+        fontFamily="ui-monospace, monospace"
+        fontSize="22"
+        letterSpacing="5"
+        fill="#8d887c"
+      >
+        LIVE PREVIEW — {d}
+      </text>
+      <circle
+        cx="1300"
+        cy="760"
+        r="280"
+        fill="none"
+        stroke="#17140f"
+        strokeOpacity="0.05"
+        strokeWidth="1.5"
+      />
+    </svg>
+  );
 }
+
+const zoomCls =
+  "absolute inset-0 h-full w-full object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]";
 
 function ProjectImage({
   p,
@@ -61,25 +150,24 @@ function ProjectImage({
   const [loaded, setLoaded] = useState(false);
 
   const domain = (p.live || "").replace(/^https?:\/\//, "").replace(/\/$/, "");
-  const cls =
-    "absolute inset-0 h-full w-full object-cover transition-all duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]";
 
   return (
     <>
-      <img
-        src={buildMockupSVG(p.title, domain, p.index)}
-        alt=""
-        aria-hidden="true"
-        className={cls}
-      />
+      {/* Guaranteed base layer — inline SVG, always paints */}
+      <div className={zoomCls}>
+        <MockupFrame title={p.title} domain={domain} index={p.index} />
+      </div>
+
+      {/* Real screenshot sits on top; if it fails, the mockup stays visible */}
       {hasImage && !imgError && (
         <img
           src={p.image}
           alt={`${p.title} — live website preview`}
           loading={priority ? "eager" : "lazy"}
+          decoding="async"
           onLoad={() => setLoaded(true)}
           onError={() => setImgError(true)}
-          className={`${cls} z-10 ${loaded ? "opacity-100" : "opacity-0"}`}
+          className={`${zoomCls} z-10 ${loaded ? "opacity-100" : "opacity-0"}`}
         />
       )}
     </>
@@ -122,7 +210,9 @@ export default function Projects() {
                   flip ? "lg:order-2" : ""
                 }`}
               >
-                <div className="relative aspect-[16/10] w-full overflow-hidden">
+                {/* FIX: the frame now owns its background + border, so the box
+                    is visible even before/without any image loading. */}
+                <div className="relative aspect-[16/10] w-full overflow-hidden border border-line bg-paper-2">
                   <ProjectImage p={p} priority={i < 2} />
                   <div className="pointer-events-none absolute inset-0 z-20 -translate-x-full bg-gradient-to-r from-transparent via-paper/25 to-transparent transition-transform duration-[1100ms] ease-out group-hover:translate-x-full" />
                 </div>
@@ -201,7 +291,8 @@ export default function Projects() {
       <Reveal>
         <div className="mt-16 flex flex-col items-center gap-4 border-t border-line pt-10 text-center">
           <p className="font-display text-2xl italic text-ink-2 md:text-3xl">
-            Plus the internal builds — AQI Calculator, Map Clustering engine & a food-ordering platform.
+            Plus the internal builds — AQI Calculator, Map Clustering engine &amp; a
+            food-ordering platform.
           </p>
           <a
             href={profile.github}
